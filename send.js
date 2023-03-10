@@ -1,16 +1,12 @@
 const Web3 = require('web3');
 const fs = require('fs');
 
-
 const web3 = new Web3(new Web3.providers.HttpProvider('https://testnet-msc.mindchain.info/'));
 
-
-const privateKey = '0xd6a821b919c8c6f30619111d422ad6ea42502175722d131efccc13e8c8635da8';
-const myAddress = '0x94318E7F06946c0a81e126DB9923f7497992a034';
-
+const privateKey = 'DROP YOUR PRIVATE KEY';
+const myAddress = 'DROP THE YOUR ADRESS';
 
 const transfers = readTransfersFromFile('t.txt');
-
 
 const gasPrice = '500';
 
@@ -18,12 +14,12 @@ async function bulkTransfer() {
  
   let nonce = await web3.eth.getTransactionCount(myAddress);
 
-
   for (const transfer of transfers) {
+    const amount = transfer.amount || '0';
     const txObject = {
       nonce: nonce,
       to: transfer.to,
-      value: web3.utils.toWei(transfer.amount),
+      value: web3.utils.toWei(amount.toString()),
       gas: 21000,
       gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     };
@@ -34,7 +30,7 @@ async function bulkTransfer() {
       if (error) {
         console.log(error);
       } else {
-        console.log(`Sent ${transfer.amount} MIND to ${transfer.to}`);
+        console.log(`Sent ${amount} MIND to ${transfer.to}`);
       }
     });
 
@@ -48,10 +44,15 @@ function readTransfersFromFile(filename) {
   console.log(`File contents: ${fileContents}\n`);
   console.log(`Found ${lines.length} lines\n`);
 
-  return lines.map(line => {
+  return lines.map((line, index) => {
     const [to, amount] = line.trim().split(',');
+    if (!to || !amount) {
+      console.log(`Skipping invalid line ${index + 1}: ${line}`);
+      return null;
+    }
     return { to, amount };
-  });
+  }).filter(Boolean);
 }
 
 bulkTransfer();
+
